@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>擦雾小画家 · 越擦越清楚</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#FFF9EF;color:#33261A;min-height:100vh}
+#app{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+.hidden{display:none!important}
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.logo{font-size:20px;font-weight:800;color:#33261A}
+.logo em{color:#E8703A;font-style:normal}
+.badges{display:flex;gap:6px}
+.badge{width:38px;height:38px;border-radius:50%;background:#F6EBD8;border:2px solid #EAD9BE;display:flex;align-items:center;justify-content:center;font-size:19px;opacity:.35;transition:all .4s}
+.badge.on{opacity:1;border-color:#E8703A;background:#fff;transform:scale(1.08)}
+.screen{background:#fff;border:3px solid #33261A;border-radius:22px;padding:26px 20px;box-shadow:0 6px 0 #EAD9BE}
+h1{font-size:30px;line-height:1.35;margin:10px 0 6px;text-align:center}
+.sub{text-align:center;color:#8A7A66;font-size:15px;line-height:1.8;margin-bottom:8px}
+.hero{text-align:center;font-size:64px;margin:14px 0 4px}
+.btn{display:block;width:100%;max-width:320px;margin:18px auto 6px;padding:16px 22px;font-size:19px;font-weight:800;color:#fff;background:#E8703A;border:none;border-radius:999px;box-shadow:0 5px 0 #B54E21;cursor:pointer;transition:transform .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #B54E21}
+.btn.green{background:#3F7A5A;box-shadow:0 5px 0 #2C5840}
+.btn.green:active{box-shadow:0 1px 0 #2C5840}
+.hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.lvname{font-size:15px;font-weight:800;color:#3F7A5A;background:#EAF3ED;border-radius:999px;padding:6px 14px}
+.progress{font-size:14px;color:#8A7A66}
+.coach{display:flex;gap:10px;align-items:flex-start;background:#F6EBD8;border-radius:16px;padding:12px 14px;margin-bottom:14px;min-height:64px}
+.coach .face{font-size:30px;flex:none}
+.coach .bubble{font-size:15px;line-height:1.7}
+.artwrap{position:relative;width:280px;height:280px;margin:0 auto 10px;border-radius:18px;overflow:hidden;background:#FFFDF6;border:2px dashed #EAD9BE}
+#art{position:absolute;inset:0;transition:filter .7s}
+#art svg{width:100%;height:100%;display:block}
+#noise{position:absolute;inset:0;pointer-events:none;transition:opacity .7s}
+#noise svg{width:100%;height:100%;display:block}
+.starsline{text-align:center;font-size:15px;font-weight:800;color:#E8703A;margin-bottom:10px}
+.wiperow{text-align:center;margin-bottom:12px}
+.btnwipe{display:inline-block;padding:12px 26px;font-size:17px;font-weight:800;color:#fff;background:#3F7A5A;border:none;border-radius:999px;box-shadow:0 4px 0 #2C5840;cursor:pointer;transition:transform .08s}
+.btnwipe:active{transform:translateY(3px);box-shadow:0 1px 0 #2C5840}
+.btnwipe:disabled{opacity:.35;pointer-events:none}
+.chips{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.chip{padding:15px 18px;font-size:19px;font-weight:800;color:#33261A;background:#fff;border:3px solid #33261A;border-radius:999px;box-shadow:0 4px 0 #EAD9BE;cursor:pointer;transition:transform .08s;text-align:center}
+.chip:active{transform:translateY(3px);box-shadow:0 1px 0 #EAD9BE}
+.chip.lit{background:#3F7A5A;color:#fff;border-color:#2C5840;box-shadow:0 4px 0 #2C5840;animation:pop .45s}
+.chip.dead{opacity:.35;pointer-events:none}
+.chip.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+.tiplabel{text-align:center;font-size:13px;color:#8A7A66;margin-top:12px}
+#overlay{position:fixed;inset:0;background:rgba(51,38,26,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.ovcard{background:#FFF9EF;border-radius:22px;border:3px solid #33261A;padding:28px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 8px 0 rgba(0,0,0,.2)}
+.ovcard .big{font-size:64px;margin:6px 0}
+.ovcard h2{font-size:24px;margin-bottom:8px}
+.ovcard p{font-size:15px;color:#8A7A66;line-height:1.8}
+.cert{border:4px double #E8703A;border-radius:18px;padding:24px 18px;background:#FFFDF6;text-align:center;margin-top:8px}
+.cert .cicon{font-size:56px}
+.cert h2{font-size:24px;color:#E8703A;margin:8px 0 2px}
+.cert .cname{font-size:19px;font-weight:800;margin:6px 0}
+.cert .cline{font-size:14px;color:#8A7A66;line-height:1.9}
+.cert .cbadges{font-size:30px;letter-spacing:8px;margin:10px 0}
+.stats{display:flex;justify-content:center;gap:14px;margin:12px 0;font-size:14px;color:#3F7A5A;font-weight:700;flex-wrap:wrap}
+.foot{text-align:center;font-size:12px;color:#8A7A66;margin-top:18px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <div class="logo">擦雾<em>小画家</em> · 越擦越清楚</div>
+    <div class="badges">
+      <div class="badge" id="badge0">🌫️</div>
+      <div class="badge" id="badge1">🖌️</div>
+      <div class="badge" id="badge2">👑</div>
+    </div>
+  </div>
+
+  <!-- 开始页 -->
+  <div class="screen" id="scr-start">
+    <div class="hero">🧽🎨</div>
+    <h1>雾里看花，<br>越擦越清楚！</h1>
+    <p class="sub">2020 年，科学家教 AI 一个绝招：<br>先给照片撒沙子，再<b>一点点擦回去</b>。<br>擦着擦着，AI 学会了画画——这就是 DDPM。<br>现在轮到你了：画蒙着雾，<b>你敢不敢不擦就猜？</b><br>越早猜对，星星越多！</p>
+    <button class="btn" id="btn-start">开始擦雾 🧽</button>
+    <p class="tiplabel">闯关成功可获「DDPM 降噪小画家证书」</p>
+  </div>
+
+  <!-- 游戏页 -->
+  <div class="screen hidden" id="scr-game">
+    <div class="hud">
+      <div class="lvname" id="lvname">第一关 · 雾里看花</div>
+      <div class="progress" id="progress">1 / 4</div>
+    </div>
+    <div class="coach">
+      <div class="face">🤖</div>
+      <div class="bubble" id="coach">我是小 D，最爱在沙子里找画！雾里的是什么？敢不敢直接猜？</div>
+    </div>
+    <div class="artwrap">
+      <div id="art"></div>
+      <div id="noise">
+        <svg viewBox="0 0 280 280" preserveAspectRatio="none">
+          <filter id="nz"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.3  0.6 0.6 0.6 0 0"/></filter>
+          <rect width="280" height="280" filter="url(#nz)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="starsline" id="starsline">现在猜对可得 ⭐⭐⭐</div>
+    <div class="wiperow"><button class="btnwipe" id="btn-wipe">擦一擦 🧽（还可擦 3 次）</button></div>
+    <div class="chips">
+      <button class="chip" id="chip0"></button>
+      <button class="chip" id="chip1"></button>
+      <button class="chip" id="chip2"></button>
+    </div>
+    <button class="btn green hidden" id="btn-next">下一幅 ➜</button>
+  </div>
+
+  <!-- 过关弹层 -->
+  <div id="overlay" class="hidden">
+    <div class="ovcard">
+      <div class="big" id="ov-icon">🌫️</div>
+      <h2 id="ov-title">破雾新星到手！</h2>
+      <p id="ov-text">浓雾里的轮廓也骗不过你！</p>
+      <button class="btn" id="btn-continue">进入下一关 🚀</button>
+    </div>
+  </div>
+
+  <!-- 证书页 -->
+  <div class="screen hidden" id="scr-cert">
+    <div class="cert">
+      <div class="cicon">🏅</div>
+      <h2>DDPM 降噪小画家证书</h2>
+      <div class="cname">授予：擦雾小画家</div>
+      <div class="cline">你能在雾里一点点把画「擦」出来，<br>还敢在大雾里抢先猜——<br>这正是 2020 年 DDPM「擦沙子」<br>掀起 AI 画画大爆发的本领！</div>
+      <div class="cbadges">🌫️ 🖌️ 👑</div>
+      <div class="stats"><span id="st-hits"></span><span id="st-stars"></span><span id="st-miss"></span></div>
+    </div>
+    <button class="btn" id="btn-again">再玩一次 🔁</button>
+    <p class="tiplabel">截图发到群里，领取你的电子奖状！</p>
+  </div>
+
+  <div class="foot">和孩子一起学AI · AI十哲 第十课《DDPM》</div>
+</div>
+<div id="testlog" style="display:none"></div>
+<script>
+(function(){
+"use strict";
+var AUTO = location.search.indexOf('autotest') >= 0;
+var D = function(ms){ return AUTO ? 20 : ms; };
+var timers = [];
+function later(fn,ms){ timers.push(setTimeout(fn, D(ms))); }
+function clearTimers(){ for(var i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
+function $(id){ return document.getElementById(id); }
+
+var BLUR = [10, 6, 3, 0];
+var NOP  = [0.95, 0.6, 0.3, 0];
+var STAR = [3, 2, 1, 1];
+
+function artSVG(name){
+  var s = '<svg viewBox="0 0 360 360">';
+  if(name==='apple'){
+    s += '<circle cx="180" cy="205" r="95" fill="#E85D4A"/>'
+       + '<path d="M180 110 Q188 82 206 72" stroke="#7A5230" stroke-width="10" fill="none" stroke-linecap="round"/>'
+       + '<ellipse cx="232" cy="88" rx="34" ry="18" fill="#3F7A5A" transform="rotate(-24 232 88)"/>'
+       + '<ellipse cx="148" cy="176" rx="26" ry="40" fill="#FFFFFF" opacity="0.35"/>';
+  } else if(name==='sun'){
+    for(var i=0;i<8;i++){
+      var a = i*Math.PI/4, x1=180+Math.cos(a)*86, y1=180+Math.sin(a)*86, x2=180+Math.cos(a)*122, y2=180+Math.sin(a)*122;
+      s += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#F4B942" stroke-width="14" stroke-linecap="round"/>';
+    }
+    s += '<circle cx="180" cy="180" r="66" fill="#F4B942"/>'
+       + '<circle cx="158" cy="168" r="8" fill="#33261A"/><circle cx="202" cy="168" r="8" fill="#33261A"/>'
+       + '<path d="M156 196 Q180 214 204 196" stroke="#33261A" stroke-width="7" fill="none" stroke-linecap="round"/>';
+  } else if(name==='fish'){
+    s += '<ellipse cx="168" cy="180" rx="95" ry="62" fill="#E8703A"/>'
+       + '<polygon points="250,180 316,132 316,228" fill="#D35A24"/>'
+       + '<circle cx="120" cy="162" r="11" fill="#FFFFFF"/><circle cx="123" cy="163" r="6" fill="#33261A"/>'
+       + '<path d="M150 120 Q168 150 150 240" stroke="#D35A24" stroke-width="8" fill="none"/>'
+       + '<circle cx="60" cy="110" r="10" fill="#BFE3E0"/><circle cx="42" cy="82" r="7" fill="#BFE3E0"/>';
+  } else if(name==='car'){
+    s += '<rect x="52" y="168" width="256" height="74" rx="26" fill="#E85D4A"/>'
+       + '<path d="M104 170 Q112 116 180 116 Q248 116 256 170 Z" fill="#E85D4A"/>'
+       + '<rect x="128" y="130" width="46" height="36" rx="8" fill="#BFE3E0"/><rect x="188" y="130" width="46" height="36" rx="8" fill="#BFE3E0"/>'
+       + '<circle cx="112" cy="250" r="30" fill="#33261A"/><circle cx="112" cy="250" r="13" fill="#EAD9BE"/>'
+       + '<circle cx="248" cy="250" r="30" fill="#33261A"/><circle cx="248" cy="250" r="13" fill="#EAD9BE"/>';
+  } else if(name==='cat'){
+    s += '<polygon points="104,120 84,44 160,86" fill="#D9B48A"/><polygon points="256,120 276,44 200,86" fill="#D9B48A"/>'
+       + '<polygon points="112,104 100,62 142,86" fill="#F2C9C0"/><polygon points="248,104 260,62 218,86" fill="#F2C9C0"/>'
+       + '<circle cx="180" cy="190" r="105" fill="#E7C9A0"/>'
+       + '<circle cx="140" cy="172" r="13" fill="#33261A"/><circle cx="220" cy="172" r="13" fill="#33261A"/>'
+       + '<polygon points="172,206 188,206 180,220" fill="#E8703A"/>'
+       + '<path d="M180 220 Q180 236 162 238 M180 220 Q180 236 198 238" stroke="#33261A" stroke-width="5" fill="none" stroke-linecap="round"/>'
+       + '<line x1="70" y1="200" x2="120" y2="208" stroke="#8A7A66" stroke-width="5" stroke-linecap="round"/><line x1="70" y1="232" x2="120" y2="226" stroke="#8A7A66" stroke-width="5" stroke-linecap="round"/>'
+       + '<line x1="290" y1="200" x2="240" y2="208" stroke="#8A7A66" stroke-width="5" stroke-linecap="round"/><line x1="290" y1="232" x2="240" y2="226" stroke="#8A7A66" stroke-width="5" stroke-linecap="round"/>';
+  } else if(name==='flower'){
+    for(var j=0;j<6;j++){
+      var b = j*Math.PI/3 - Math.PI/2;
+      s += '<circle cx="'+(180+Math.cos(b)*58)+'" cy="'+(150+Math.sin(b)*58)+'" r="40" fill="#F2A0B5"/>';
+    }
+    s += '<circle cx="180" cy="150" r="38" fill="#F4B942"/>'
+       + '<rect x="171" y="188" width="18" height="120" rx="9" fill="#3F7A5A"/>'
+       + '<ellipse cx="138" cy="270" rx="34" ry="16" fill="#3F7A5A" transform="rotate(24 138 270)"/>';
+  } else if(name==='house'){
+    s += '<rect x="92" y="168" width="176" height="130" rx="8" fill="#F6EBD8" stroke="#8A7A66" stroke-width="5"/>'
+       + '<polygon points="180,60 72,172 288,172" fill="#E85D4A"/>'
+       + '<rect x="156" y="222" width="48" height="76" rx="6" fill="#7A5230"/>'
+       + '<rect x="112" y="190" width="40" height="40" rx="6" fill="#BFE3E0"/><rect x="208" y="190" width="40" height="40" rx="6" fill="#BFE3E0"/>';
+  } else if(name==='rabbit'){
+    s += '<ellipse cx="138" cy="86" rx="26" ry="70" fill="#F2EDE4"/><ellipse cx="222" cy="86" rx="26" ry="70" fill="#F2EDE4"/>'
+       + '<ellipse cx="138" cy="92" rx="12" ry="48" fill="#F2C9C0"/><ellipse cx="222" cy="92" rx="12" ry="48" fill="#F2C9C0"/>'
+       + '<circle cx="180" cy="216" r="92" fill="#F2EDE4"/>'
+       + '<circle cx="146" cy="200" r="11" fill="#33261A"/><circle cx="214" cy="200" r="11" fill="#33261A"/>'
+       + '<polygon points="172,232 188,232 180,244" fill="#E8703A"/>'
+       + '<path d="M180 244 Q180 258 166 260 M180 244 Q180 258 194 260" stroke="#33261A" stroke-width="5" fill="none" stroke-linecap="round"/>';
+  } else if(name==='star'){
+    s += '<polygon points="180,80 204.7,146 275.1,149.1 219.9,193 238.8,260.9 180,222 121.2,260.9 140.1,193 84.9,149.1 155.3,146" fill="#F4B942"/>'
+       + '<circle cx="162" cy="162" r="7" fill="#33261A"/><circle cx="198" cy="162" r="7" fill="#33261A"/>'
+       + '<path d="M160 182 Q180 198 200 182" stroke="#33261A" stroke-width="6" fill="none" stroke-linecap="round"/>';
+  } else if(name==='tree'){
+    s += '<rect x="164" y="200" width="32" height="104" rx="10" fill="#7A5230"/>'
+       + '<circle cx="180" cy="120" r="66" fill="#3F7A5A"/><circle cx="112" cy="176" r="52" fill="#5A8F6B"/><circle cx="248" cy="176" r="52" fill="#5A8F6B"/>'
+       + '<circle cx="150" cy="110" r="9" fill="#E85D4A"/><circle cx="214" cy="140" r="9" fill="#E85D4A"/><circle cx="180" cy="180" r="9" fill="#E85D4A"/>';
+  } else if(name==='bird'){
+    s += '<ellipse cx="180" cy="196" rx="82" ry="66" fill="#6BA3C6"/>'
+       + '<circle cx="222" cy="128" r="44" fill="#6BA3C6"/>'
+       + '<polygon points="262,128 300,140 262,152" fill="#E8703A"/>'
+       + '<circle cx="232" cy="120" r="8" fill="#33261A"/>'
+       + '<path d="M96 176 Q140 150 176 180 Q140 210 96 196" fill="#4A7A9B"/>'
+       + '<path d="M104 252 Q84 272 64 262" stroke="#4A7A9B" stroke-width="10" fill="none" stroke-linecap="round"/>'
+       + '<line x1="172" y1="262" x2="172" y2="290" stroke="#E8703A" stroke-width="7" stroke-linecap="round"/><line x1="196" y1="262" x2="196" y2="290" stroke="#E8703A" stroke-width="7" stroke-linecap="round"/>';
+  }
+  return s + '</svg>';
+}
+
+var LEVELS = [
+  { name:'第一关 · 雾里看花', badge:'🌫️', badgeName:'破雾新星',
+    ov:'浓雾里的轮廓也骗不过你！下一关，会有「长得太像」的捣蛋鬼。',
+    rounds:[
+      {art:'apple', c:['苹果','气球','番茄'], ans:0, trap:2,
+       why:'红红的、圆圆的、还有小叶子和果柄——是苹果！',
+       trapTip:'番茄也是红红的圆圆的，可它没有苹果的小柄窝——擦一擦，看细节！'},
+      {art:'sun', c:['太阳','饼干','金币'], ans:0, trap:1,
+       why:'圆圆的脸蛋，四周是直直的光芒——太阳公公！',
+       trapTip:'饼干也圆圆的、边上还有花纹——可太阳的光芒是直线，擦一擦看清楚！'},
+      {art:'fish', c:['小鱼','小鸟','树叶'], ans:0, trap:1,
+       why:'椭圆的身子、三角的尾巴、旁边还有泡泡——小鱼在游泳！',
+       trapTip:'小鸟也有尖嘴巴……可这一位长着尾巴还在吐泡泡——水里的是小鱼！'},
+      {art:'car', c:['小汽车','房子','书包'], ans:0, trap:1,
+       why:'两个圆圆的车轮、蓝蓝的车窗——小汽车嘟嘟嘟！',
+       trapTip:'房子也有窗户！可房子下面不会长轮子——擦一擦，看最下面！'}
+    ]},
+  { name:'第二关 · 一擦一猜', badge:'🖌️', badgeName:'显影达人',
+    ov:'捣蛋鬼再也骗不到你——轮廓会骗人，细节说实话！',
+    rounds:[
+      {art:'cat', c:['小猫','兔子','老虎'], ans:0, trap:1,
+       why:'尖尖的短耳朵、长长的胡子、三角小鼻子——是小猫！',
+       trapTip:'兔子也有耳朵！可兔子的耳朵长长的竖在头顶——这位是短耳朵，擦一擦看头顶！'},
+      {art:'flower', c:['小花','太阳','棒棒糖'], ans:0, trap:2,
+       why:'六片粉花瓣、黄黄的花心、下面还有绿绿的茎——是小花！',
+       trapTip:'棒棒糖也圆圆的很诱人！可它有花瓣和花茎——擦一擦，看下面有没有茎！'},
+      {art:'house', c:['房子','汽车','礼物盒'], ans:0, trap:2,
+       why:'红红的三角屋顶、方方的门窗——是小房子！',
+       trapTip:'礼物盒也方方的！可礼物盒没有烟囱一样的屋顶和门——擦一擦看屋顶！'},
+      {art:'rabbit', c:['兔子','小猫','老鼠'], ans:0, trap:1,
+       why:'两只长长的耳朵竖得高高的——是小兔子！',
+       trapTip:'小猫的脸也圆圆的！可小猫的耳朵短短尖尖——这位的长耳朵，擦一擦看头顶！'}
+    ]},
+  { name:'第三关 · 火眼金睛', badge:'👑', badgeName:'降噪大师',
+    ov:'',
+    rounds:[
+      {art:'star', c:['星星','太阳','雪花'], ans:0, trap:1,
+       why:'五个尖尖的角、金黄的颜色——是天上的小星星！',
+       trapTip:'太阳也发光！可太阳是圆脸加光芒，这位长着五个尖角——敢不擦就猜吗？'},
+      {art:'tree', c:['大树','小花','西兰花'], ans:0, trap:2,
+       why:'粗粗的树干、三团绿绿的树冠，上面还结着红果子——是大树！',
+       trapTip:'西兰花也是绿绿的一团团！可它没有粗树干和红果子——擦一擦看下面！'},
+      {art:'bird', c:['小鸟','小鱼','飞机'], ans:0, trap:2,
+       why:'尖尖的嘴巴、蓝蓝的翅膀、两只小脚——是小鸟！',
+       trapTip:'飞机也有翅膀！可飞机没有小嘴巴和小脚——擦一擦，看有没有脚！'}
+    ]}
+];
+
+var S = { scr:'start', level:0, round:0, step:0, phase:'idle', answer:-1, trap:-1,
+          hits:0, mistakes:0, stars:0, badges:[], done:false, overlay:false };
+
+function syncDBG(){
+  window.__DBG = { state:function(){ return {
+    scr:S.scr, level:S.level, round:S.round, step:S.step, phase:S.phase,
+    answer:S.answer, trap:S.trap, hits:S.hits, mistakes:S.mistakes, stars:S.stars,
+    badges:S.badges.slice(), done:S.done, overlay:S.overlay }; } };
+}
+
+function typeBubble(el, text){
+  clearTimers();
+  if(AUTO){ el.textContent = text; return; }
+  el.textContent = '';
+  var i = 0;
+  (function tick(){
+    if(i <= text.length){ el.textContent = text.slice(0, i); i++; later(tick, 28); }
+  })();
+}
+
+function show(id){ $(id).classList.remove('hidden'); }
+function hide(id){ $(id).classList.add('hidden'); }
+
+function paintFog(){
+  $('art').style.filter = 'blur(' + BLUR[S.step] + 'px)';
+  $('noise').style.opacity = NOP[S.step];
+  var left = 3 - S.step;
+  var bw = $('btn-wipe');
+  if(S.phase === 'pick' && left > 0){
+    bw.disabled = false;
+    bw.textContent = '擦一擦 🧽（还可擦 ' + left + ' 次）';
+  } else {
+    bw.disabled = true;
+    bw.textContent = '擦一擦 🧽（还可擦 0 次）';
+  }
+  $('starsline').textContent = '现在猜对可得 ' + '⭐'.repeat(STAR[S.step]);
+}
+
+function loadRound(){
+  var L = LEVELS[S.level], R = L.rounds[S.round];
+  S.phase = 'pick'; S.step = 0; S.answer = R.ans; S.trap = R.trap; S.overlay = false;
+  $('lvname').textContent = L.name;
+  $('progress').textContent = (S.round+1) + ' / ' + L.rounds.length;
+  $('art').innerHTML = artSVG(R.art);
+  for(var i=0;i<3;i++){
+    var ch = $('chip'+i);
+    ch.textContent = R.c[i];
+    ch.className = 'chip';
+  }
+  hide('btn-next');
+  paintFog();
+  typeBubble($('coach'), S.round===0 ? '小 D 提示：敢在大雾里直接猜吗？越早猜对，星星越多！' : '继续显影：每擦一次，线索多一点，星星少一点！');
+  syncDBG();
+}
+
+function wipe(){
+  if(S.scr !== 'game' || S.phase !== 'pick') return;
+  if(S.step >= 3) return;
+  S.step++;
+  paintFog();
+  typeBubble($('coach'), ['🧽 擦掉一点雾……轮廓要冒出来了！','🧽 又清楚了一点——看到细节了吗？','🧽 最后一层雾也擦掉了！'][S.step-1] || '🧽');
+  syncDBG();
+}
+
+function pick(i){
+  if(S.scr !== 'game' || S.phase !== 'pick') return;
+  var L = LEVELS[S.level], R = L.rounds[S.round];
+  var ch = $('chip'+i);
+  if(ch.classList.contains('dead')) return;
+  if(i === S.answer){
+    S.phase = 'reveal'; S.hits++;
+    var earned = STAR[S.step]; S.stars += earned;
+    ch.classList.add('lit');
+    S.step = 3; paintFog();
+    for(var k=0;k<3;k++) if(k!==i) $('chip'+k).classList.add('dead');
+    typeBubble($('coach'), '🎉 猜对了，+' + earned + ' 颗星！' + R.why);
+    later(function(){ show('btn-next'); }, 500);
+  } else {
+    S.mistakes++;
+    if(i === S.trap){
+      typeBubble($('coach'), '⚠️ ' + R.trapTip);
+    } else {
+      typeBubble($('coach'), '😆 这个轮廓对不上！擦一擦，再看看细节。');
+    }
+    ch.classList.add('shake');
+    later(function(){ ch.classList.remove('shake'); ch.classList.add('dead'); }, 420);
+  }
+  syncDBG();
+}
+
+function next(){
+  if(S.scr !== 'game' || S.phase !== 'reveal') return;
+  var L = LEVELS[S.level];
+  S.round++;
+  if(S.round >= L.rounds.length){
+    S.badges.push(L.badge);
+    $('badge'+S.level).classList.add('on');
+    if(S.level >= LEVELS.length-1){
+      S.done = true; S.scr = 'cert';
+      hide('scr-game'); show('scr-cert');
+      $('st-hits').textContent = '✅ 猜对 ' + S.hits + ' 幅';
+      $('st-stars').textContent = '⭐ 共 ' + S.stars + ' 颗星';
+      $('st-miss').textContent = '🕳️ 猜错 ' + S.mistakes + ' 次';
+    } else {
+      S.overlay = true;
+      $('ov-icon').textContent = L.badge;
+      $('ov-title').textContent = L.badgeName + '到手！';
+      $('ov-text').textContent = L.ov;
+      show('overlay');
+    }
+  } else {
+    loadRound();
+  }
+  syncDBG();
+}
+
+function cont(){
+  if(!$('overlay') || $('overlay').classList.contains('hidden')) return;
+  hide('overlay');
+  S.overlay = false;
+  S.level++; S.round = 0;
+  loadRound();
+}
+
+function start(){
+  S.scr = 'game'; S.level = 0; S.round = 0;
+  S.hits = 0; S.mistakes = 0; S.stars = 0; S.badges = []; S.done = false; S.overlay = false;
+  hide('scr-start'); hide('scr-cert'); show('scr-game');
+  for(var i=0;i<3;i++) $('badge'+i).classList.remove('on');
+  loadRound();
+}
+
+function resetAll(){
+  S.scr='start'; S.level=0; S.round=0; S.step=0; S.phase='idle'; S.answer=-1; S.trap=-1;
+  S.hits=0; S.mistakes=0; S.stars=0; S.badges=[]; S.done=false; S.overlay=false;
+  clearTimers();
+  hide('scr-game'); hide('scr-cert'); hide('overlay'); show('scr-start');
+  for(var i=0;i<3;i++) $('badge'+i).classList.remove('on');
+  syncDBG();
+}
+
+function softRestart(){ try{ location.reload(); }catch(e){} setTimeout(resetAll, 400); }
+
+$('btn-start').addEventListener('click', start);
+$('btn-wipe').addEventListener('click', wipe);
+$('btn-next').addEventListener('click', next);
+$('btn-continue').addEventListener('click', cont);
+$('btn-again').addEventListener('click', softRestart);
+for(var i=0;i<3;i++){
+  (function(idx){ $('chip'+idx).addEventListener('click', function(){ pick(idx); }); })(i);
+}
+syncDBG();
+})();
+</script>
+</body>
+</html>
